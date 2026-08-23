@@ -25,9 +25,15 @@ def create_workspace(
     try:
         return workspace_service.create_workspace(db=db, schema=payload)
     except ValueError as err:
+        msg = str(err)
+        if "already exists" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=msg,
+            )
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(err),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=msg,
         )
 
 
@@ -94,9 +100,15 @@ def update_workspace(
     try:
         return workspace_service.update_workspace(db=db, db_workspace=db_workspace, schema=payload)
     except ValueError as err:
+        msg = str(err)
+        if "already exists" in msg:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=msg,
+            )
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(err),
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=msg,
         )
 
 

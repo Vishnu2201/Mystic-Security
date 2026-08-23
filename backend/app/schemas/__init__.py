@@ -8,6 +8,20 @@ from app.schemas.target import (
     TargetUpdate,
     TargetResponse,
 )
+from app.schemas.scope import (
+    ScopeCreate,
+    ScopeUpdate,
+    ScopeResponse,
+    TargetAuthorizationResult,
+)
+from app.schemas.authorization import (
+    AuthorizationCheckRequest,
+    AuthorizationCheckResponse,
+)
+from app.schemas.security_operation import (
+    SecurityOperationCreate,
+    SecurityOperationResponse,
+)
 
 __all__ = [
     "WorkspaceCreate",
@@ -16,4 +30,12 @@ __all__ = [
     "TargetCreate",
     "TargetUpdate",
     "TargetResponse",
+    "ScopeCreate",
+    "ScopeUpdate",
+    "ScopeResponse",
+    "TargetAuthorizationResult",
+    "AuthorizationCheckRequest",
+    "AuthorizationCheckResponse",
+    "SecurityOperationCreate",
+    "SecurityOperationResponse",
 ]

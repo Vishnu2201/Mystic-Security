@@ -16,6 +16,7 @@ from app.models import (  # noqa
     Finding,
     Evidence,
     Report,
+    SecurityOperation,
     authorization_targets,
     authorization_scopes,
     finding_observations,

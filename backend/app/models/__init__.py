@@ -1,5 +1,10 @@
 from app.models.enums import (
     TargetCategory,
+    ScopeType,
+    AuthorizationLevel,
+    ActivityType,
+    SecurityOperationType,
+    SecurityOperationStatus,
     AuthorizationStatus,
     ScopeRuleAction,
     ScopeRuleCategory,
@@ -26,10 +31,16 @@ from app.models.observation import Observation
 from app.models.finding import Finding
 from app.models.evidence import Evidence
 from app.models.report import Report
+from app.models.security_operation import SecurityOperation
 
 __all__ = [
     # Enums
     "TargetCategory",
+    "ScopeType",
+    "AuthorizationLevel",
+    "ActivityType",
+    "SecurityOperationType",
+    "SecurityOperationStatus",
     "AuthorizationStatus",
     "ScopeRuleAction",
     "ScopeRuleCategory",
@@ -56,4 +67,5 @@ __all__ = [
     "Finding",
     "Evidence",
     "Report",
+    "SecurityOperation",
 ]

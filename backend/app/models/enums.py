@@ -9,6 +9,43 @@ class TargetCategory(str, enum.Enum):
     APPLICATION = "APPLICATION"
 
 
+class ScopeType(str, enum.Enum):
+    DOMAIN = "DOMAIN"
+    IP_ADDRESS = "IP_ADDRESS"
+    URL = "URL"
+    NETWORK_RANGE = "NETWORK_RANGE"
+    APPLICATION = "APPLICATION"
+
+
+class AuthorizationLevel(str, enum.Enum):
+    PASSIVE_ONLY = "PASSIVE_ONLY"
+    ACTIVE_ALLOWED = "ACTIVE_ALLOWED"
+    PROHIBITED = "PROHIBITED"
+
+
+class ActivityType(str, enum.Enum):
+    PASSIVE = "PASSIVE"
+    ACTIVE = "ACTIVE"
+
+
+class SecurityOperationType(str, enum.Enum):
+    PASSIVE_RECON = "PASSIVE_RECON"
+    ACTIVE_RECON = "ACTIVE_RECON"
+    PORT_SCAN = "PORT_SCAN"
+    VULNERABILITY_SCAN = "VULNERABILITY_SCAN"
+    WEB_SCAN = "WEB_SCAN"
+    CUSTOM = "CUSTOM"
+
+
+class SecurityOperationStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    AUTHORIZED = "AUTHORIZED"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    DENIED = "DENIED"
+
+
 class AuthorizationStatus(str, enum.Enum):
     """
     Persisted lifecycle status for operational consent records.

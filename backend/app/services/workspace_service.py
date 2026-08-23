@@ -5,6 +5,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from app.models.workspace import Workspace
 from app.schemas.workspace import WorkspaceCreate, WorkspaceUpdate
+from app.core.validators import (
+    validate_workspace_name,
+    validate_workspace_description,
+)
 
 
 def get_workspace(db: Session, workspace_id: UUID) -> Optional[Workspace]:
@@ -26,13 +30,16 @@ def list_workspaces(db: Session, skip: int = 0, limit: int = 100) -> List[Worksp
 
 def create_workspace(db: Session, schema: WorkspaceCreate) -> Workspace:
     """Create a new Workspace entity."""
-    existing = get_workspace_by_name(db, schema.name)
+    clean_name = validate_workspace_name(schema.name)
+    clean_desc = validate_workspace_description(schema.description)
+
+    existing = get_workspace_by_name(db, clean_name)
     if existing:
-        raise ValueError(f"Workspace with name '{schema.name}' already exists.")
+        raise ValueError(f"Workspace with name '{clean_name}' already exists.")
 
     db_workspace = Workspace(
-        name=schema.name,
-        description=schema.description,
+        name=clean_name,
+        description=clean_desc,
     )
     try:
         db.add(db_workspace)
@@ -41,7 +48,7 @@ def create_workspace(db: Session, schema: WorkspaceCreate) -> Workspace:
         return db_workspace
     except IntegrityError as err:
         db.rollback()
-        raise ValueError(f"Workspace with name '{schema.name}' already exists.") from err
+        raise ValueError(f"Workspace with name '{clean_name}' already exists.") from err
 
 
 def update_workspace(db: Session, db_workspace: Workspace, schema: WorkspaceUpdate) -> Workspace:
@@ -53,16 +60,15 @@ def update_workspace(db: Session, db_workspace: Workspace, schema: WorkspaceUpda
     - Explicitly provided values ('description': 'text' in JSON) -> set database column to 'text'
     """
     if "name" in schema.model_fields_set:
-        if schema.name is None:
-            raise ValueError("Workspace name cannot be null.")
-        if schema.name != db_workspace.name:
-            existing = get_workspace_by_name(db, schema.name)
-            if existing:
-                raise ValueError(f"Workspace with name '{schema.name}' already exists.")
-            db_workspace.name = schema.name
+        clean_name = validate_workspace_name(schema.name)
+        if clean_name != db_workspace.name:
+            existing = get_workspace_by_name(db, clean_name)
+            if existing and existing.id != db_workspace.id:
+                raise ValueError(f"Workspace with name '{clean_name}' already exists.")
+            db_workspace.name = clean_name
 
     if "description" in schema.model_fields_set:
-        db_workspace.description = schema.description
+        db_workspace.description = validate_workspace_description(schema.description)
 
     try:
         db.commit()

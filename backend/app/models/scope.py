@@ -1,10 +1,10 @@
 import uuid
 from typing import List, TYPE_CHECKING
-from sqlalchemy import Enum as SQLEnum, ForeignKey, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import CIDR, INET, UUID
+from sqlalchemy import Boolean, Enum as SQLEnum, ForeignKey, String, Text, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base_class import Base
-from app.models.enums import ScopeRuleAction, ScopeRuleCategory
+from app.models.enums import AuthorizationLevel, ScopeRuleAction, ScopeRuleCategory, ScopeType
 from app.models.associations import authorization_scopes
 
 if TYPE_CHECKING:
@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 class Scope(Base):
     """
-    Scope persistent entity.
-    Workspace-level container for technical inclusion and exclusion rules.
+    Scope persistent entity for Phase 0.7.
+    Defines explicit workspace-level target inclusion, exclusion, and authorization rules.
     """
     __tablename__ = "scopes"
     __table_args__ = (
-        UniqueConstraint("workspace_id", "name", name="uq_scopes_workspace_name"),
+        UniqueConstraint("workspace_id", "scope_type", "pattern", name="uq_scopes_workspace_type_pattern"),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
@@ -31,6 +31,23 @@ class Scope(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    scope_type: Mapped[ScopeType] = mapped_column(
+        SQLEnum(ScopeType, name="scope_type_enum"),
+        nullable=False,
+    )
+    pattern: Mapped[str] = mapped_column(String(512), nullable=False)
+
+    authorization_level: Mapped[AuthorizationLevel] = mapped_column(
+        SQLEnum(AuthorizationLevel, name="authorization_level_enum"),
+        nullable=False,
+    )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
+        server_default=text("true"),
+        nullable=False,
+    )
 
     # Relationships
     workspace: Mapped["Workspace"] = relationship("Workspace", back_populates="scopes")
@@ -69,10 +86,6 @@ class ScopeRule(Base):
         nullable=False,
     )
     pattern: Mapped[str] = mapped_column(String(512), nullable=False)
-
-    # Native PostgreSQL network types
-    ip_address: Mapped[str | None] = mapped_column(INET, nullable=True)
-    cidr_range: Mapped[str | None] = mapped_column(CIDR, nullable=True)
 
     # Relationships
     scope: Mapped["Scope"] = relationship("Scope", back_populates="rules")

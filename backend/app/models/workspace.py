@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.finding import Finding
     from app.models.evidence import Evidence
     from app.models.report import Report
+    from app.models.security_operation import SecurityOperation
 
 
 class Workspace(Base):
@@ -38,3 +39,4 @@ class Workspace(Base):
     findings: Mapped[List["Finding"]] = relationship("Finding", back_populates="workspace", cascade="all, delete-orphan")
     evidence_records: Mapped[List["Evidence"]] = relationship("Evidence", back_populates="workspace", cascade="all, delete-orphan")
     reports: Mapped[List["Report"]] = relationship("Report", back_populates="workspace", cascade="all, delete-orphan")
+    security_operations: Mapped[List["SecurityOperation"]] = relationship("SecurityOperation", back_populates="workspace", cascade="all, delete-orphan")

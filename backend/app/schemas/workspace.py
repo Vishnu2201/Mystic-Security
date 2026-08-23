@@ -1,19 +1,45 @@
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.core.validators import (
+    validate_workspace_name,
+    validate_workspace_description,
+)
 
 
 class WorkspaceCreate(BaseModel):
     """Schema for creating a new Workspace."""
-    name: str = Field(..., min_length=1, max_length=255, description="Unique workspace name")
+    name: str = Field(..., description="Unique workspace name")
     description: Optional[str] = Field(None, description="Optional workspace description")
+
+    @field_validator("name")
+    @classmethod
+    def check_name(cls, v: str) -> str:
+        return validate_workspace_name(v)
+
+    @field_validator("description")
+    @classmethod
+    def check_description(cls, v: Optional[str]) -> Optional[str]:
+        return validate_workspace_description(v)
 
 
 class WorkspaceUpdate(BaseModel):
     """Schema for updating an existing Workspace."""
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="Updated workspace name")
+    name: Optional[str] = Field(None, description="Updated workspace name")
     description: Optional[str] = Field(None, description="Updated workspace description")
+
+    @field_validator("name")
+    @classmethod
+    def check_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            raise ValueError("Workspace name cannot be null.")
+        return validate_workspace_name(v)
+
+    @field_validator("description")
+    @classmethod
+    def check_description(cls, v: Optional[str]) -> Optional[str]:
+        return validate_workspace_description(v)
 
 
 class WorkspaceResponse(BaseModel):

@@ -3,27 +3,28 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.schemas.target import TargetCreate, TargetResponse, TargetUpdate
-from app.services import target_service
+from app.models.enums import AuthorizationLevel, ScopeType
+from app.schemas.scope import ScopeCreate, ScopeResponse, ScopeUpdate
+from app.services import scope_service
 
 router = APIRouter()
 
 
 @router.post(
     "",
-    response_model=TargetResponse,
+    response_model=ScopeResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Create a new Target",
+    summary="Create a new Scope",
 )
-def create_target(
-    payload: TargetCreate,
+def create_scope(
+    payload: ScopeCreate,
     db: Session = Depends(get_db),
-) -> TargetResponse:
+) -> ScopeResponse:
     """
-    Create a new empirical target subject within a Workspace.
+    Create a new target inclusion, exclusion, or authorization Scope rule.
     """
     try:
-        return target_service.create_target(db=db, schema=payload)
+        return scope_service.create_scope(db=db, schema=payload)
     except ValueError as err:
         msg = str(err)
         if "does not exist" in msg:
@@ -44,72 +45,77 @@ def create_target(
 
 @router.get(
     "",
-    response_model=List[TargetResponse],
+    response_model=List[ScopeResponse],
     status_code=status.HTTP_200_OK,
-    summary="List all Targets",
+    summary="List all Scopes",
 )
-def list_targets(
+def list_scopes(
     workspace_id: Optional[UUID] = Query(None, description="Optional workspace ID filter"),
+    scope_type: Optional[ScopeType] = Query(None, description="Optional scope type filter"),
+    authorization_level: Optional[AuthorizationLevel] = Query(None, description="Optional authorization level filter"),
+    is_active: Optional[bool] = Query(None, description="Optional active status filter"),
     skip: int = Query(0, ge=0, description="Pagination offset"),
     limit: int = Query(100, ge=1, le=500, description="Pagination limit"),
     db: Session = Depends(get_db),
-) -> List[TargetResponse]:
+) -> List[ScopeResponse]:
     """
-    Retrieve a paginated list of targets, optionally filtered by workspace_id.
-    Returns an empty array when no targets exist matching the filter.
+    Retrieve a paginated list of scopes with optional filtering by workspace_id, scope_type, authorization_level, or is_active.
     """
-    return target_service.list_targets(
+    return scope_service.list_scopes(
         db=db,
         workspace_id=workspace_id,
+        scope_type=scope_type,
+        authorization_level=authorization_level,
+        is_active=is_active,
         skip=skip,
         limit=limit,
     )
 
 
 @router.get(
-    "/{target_id}",
-    response_model=TargetResponse,
+    "/{scope_id}",
+    response_model=ScopeResponse,
     status_code=status.HTTP_200_OK,
-    summary="Get Target by ID",
+    summary="Get Scope by ID",
 )
-def get_target(
-    target_id: UUID,
+def get_scope(
+    scope_id: UUID,
     db: Session = Depends(get_db),
-) -> TargetResponse:
+) -> ScopeResponse:
     """
-    Retrieve a single target by its unique identifier.
+    Retrieve a single scope by its unique identifier.
     """
-    db_target = target_service.get_target(db=db, target_id=target_id)
-    if not db_target:
+    db_scope = scope_service.get_scope(db=db, scope_id=scope_id)
+    if not db_scope:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Target with ID '{target_id}' not found.",
+            detail=f"Scope with ID '{scope_id}' not found.",
         )
-    return db_target
+    return db_scope
 
 
 @router.patch(
-    "/{target_id}",
-    response_model=TargetResponse,
+    "/{scope_id}",
+    response_model=ScopeResponse,
     status_code=status.HTTP_200_OK,
-    summary="Update Target",
+    summary="Update Scope",
 )
-def update_target(
-    target_id: UUID,
-    payload: TargetUpdate,
+def update_scope(
+    scope_id: UUID,
+    payload: ScopeUpdate,
     db: Session = Depends(get_db),
-) -> TargetResponse:
+) -> ScopeResponse:
     """
-    Update details of an existing target.
+    Update details of an existing scope.
     """
-    db_target = target_service.get_target(db=db, target_id=target_id)
-    if not db_target:
+    db_scope = scope_service.get_scope(db=db, scope_id=scope_id)
+    if not db_scope:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Target with ID '{target_id}' not found.",
+            detail=f"Scope with ID '{scope_id}' not found.",
         )
     try:
-        return target_service.update_target(db=db, db_target=db_target, schema=payload)
+        return scope_service.update_scope(db=db, db_scope=db_scope, schema=payload)
     except ValueError as err:
         msg = str(err)
         if "does not exist" in msg:
@@ -129,27 +135,21 @@ def update_target(
 
 
 @router.delete(
-    "/{target_id}",
+    "/{scope_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete Target",
+    summary="Delete Scope",
 )
-def delete_target(
-    target_id: UUID,
+def delete_scope(
+    scope_id: UUID,
     db: Session = Depends(get_db),
 ) -> None:
     """
-    Delete an existing target.
+    Delete an existing scope.
     """
-    db_target = target_service.get_target(db=db, target_id=target_id)
-    if not db_target:
+    db_scope = scope_service.get_scope(db=db, scope_id=scope_id)
+    if not db_scope:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Target with ID '{target_id}' not found.",
+            detail=f"Scope with ID '{scope_id}' not found.",
         )
-    try:
-        target_service.delete_target(db=db, db_target=db_target)
-    except ValueError as err:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=str(err),
-        )
+    scope_service.delete_scope(db=db, db_scope=db_scope)

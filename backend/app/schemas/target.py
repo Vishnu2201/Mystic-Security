@@ -1,8 +1,13 @@
 from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from app.models.enums import TargetCategory
+from app.core.validators import (
+    validate_target_identifier,
+    validate_ip_address,
+    validate_network_range,
+)
 
 
 class TargetCreate(BaseModel):
@@ -15,6 +20,21 @@ class TargetCreate(BaseModel):
     ip_address: Optional[str] = Field(None, description="Optional IPv4/IPv6 address")
     network_range: Optional[str] = Field(None, description="Optional CIDR block")
 
+    @field_validator("ip_address")
+    @classmethod
+    def check_ip_address(cls, v: Optional[str]) -> Optional[str]:
+        return validate_ip_address(v)
+
+    @field_validator("network_range")
+    @classmethod
+    def check_network_range(cls, v: Optional[str]) -> Optional[str]:
+        return validate_network_range(v)
+
+    @model_validator(mode="after")
+    def validate_identifier_against_category(self) -> "TargetCreate":
+        self.identifier = validate_target_identifier(self.target_category, self.identifier)
+        return self
+
 
 class TargetUpdate(BaseModel):
     """Schema for updating an existing Target."""
@@ -25,6 +45,33 @@ class TargetUpdate(BaseModel):
     description: Optional[str] = Field(None, description="Updated target description")
     ip_address: Optional[str] = Field(None, description="Updated IPv4/IPv6 address")
     network_range: Optional[str] = Field(None, description="Updated CIDR block")
+
+    @field_validator("ip_address")
+    @classmethod
+    def check_ip_address(cls, v: Optional[str]) -> Optional[str]:
+        return validate_ip_address(v)
+
+    @field_validator("network_range")
+    @classmethod
+    def check_network_range(cls, v: Optional[str]) -> Optional[str]:
+        return validate_network_range(v)
+
+    @model_validator(mode="after")
+    def validate_partial_fields(self) -> "TargetUpdate":
+        if "target_category" in self.model_fields_set and self.target_category is None:
+            raise ValueError("Target target_category cannot be null.")
+        if "identifier" in self.model_fields_set and self.identifier is None:
+            raise ValueError("Target identifier cannot be null.")
+
+        # If both category and identifier are provided in PATCH payload, validate them together
+        if (
+            "target_category" in self.model_fields_set
+            and "identifier" in self.model_fields_set
+            and self.target_category is not None
+            and self.identifier is not None
+        ):
+            self.identifier = validate_target_identifier(self.target_category, self.identifier)
+        return self
 
 
 class TargetResponse(BaseModel):

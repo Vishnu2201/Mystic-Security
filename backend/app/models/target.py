@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.authorization import Authorization
     from app.models.assessment import Assessment
     from app.models.asset import Asset
+    from app.models.security_operation import SecurityOperation
 
 
 class Target(Base):
@@ -52,3 +53,4 @@ class Target(Base):
     )
     assessments: Mapped[List["Assessment"]] = relationship("Assessment", back_populates="target")
     assets: Mapped[List["Asset"]] = relationship("Asset", back_populates="target")
+    security_operations: Mapped[List["SecurityOperation"]] = relationship("SecurityOperation", back_populates="target", cascade="all, delete-orphan")
